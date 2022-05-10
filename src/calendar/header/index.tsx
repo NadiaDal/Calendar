@@ -1,23 +1,26 @@
 import React from 'react';
 import {Text, View, TouchableOpacity} from 'react-native';
 import styles from './style';
+import {Navigation} from '../../types';
 
 interface HeaderProps {
   formattedMonth: string;
+  onPress: (navigation: Navigation) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({formattedMonth}) => {
+const Header: React.FC<HeaderProps> = ({formattedMonth, onPress}) => {
+  const renderButton = (navigation: Navigation) => {
+    return (
+      <TouchableOpacity onPress={() => onPress(navigation)}>
+        <Text>{navigation}</Text>
+      </TouchableOpacity>
+    );
+  };
   return (
-    <View>
-      <View style={styles.header}>
-        <TouchableOpacity>
-          <Text>Prev</Text>
-        </TouchableOpacity>
-        <Text style={styles.text}>{formattedMonth}</Text>
-        <TouchableOpacity>
-          <Text>Next</Text>
-        </TouchableOpacity>
-      </View>
+    <View style={styles.header}>
+      {renderButton(Navigation.prev)}
+      <Text style={styles.text}>{formattedMonth}</Text>
+      {renderButton(Navigation.next)}
     </View>
   );
 };

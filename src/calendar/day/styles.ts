@@ -3,7 +3,9 @@ import {StyleSheet} from 'react-native';
 const styles = StyleSheet.create({
   container: {
     height: 32,
+    width: 32,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   selected: {
     backgroundColor: '#0d94c9',

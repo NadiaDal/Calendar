@@ -10,24 +10,33 @@ interface DayProps {
   onPress: (day: Moment) => void;
 }
 
-const Index: React.FC<DayProps> = ({date, isSelected, isToday}) => {
+type DayStyle = (typeof styles.container | typeof styles.selected)[];
+type DayTextStyle = (typeof styles.text |typeof styles.todayText | typeof styles.selectedText)[];
+
+const Day: React.FC<DayProps> = ({date, isSelected, isToday, onPress}) => {
   const getStyles = () => {
-    return styles.container;
+    let style: DayStyle = [styles.container];
+    if (isSelected) {
+      style.push(styles.selected);
+    }
+    return style;
   };
 
   const getTextStyles = () => {
-    let style = [styles.text];
+    let style: DayTextStyle = [styles.text];
     if (isToday) {
-      // @ts-ignore
       style.push(styles.todayText);
+    }
+    if (isSelected) {
+      style.push(styles.selectedText);
     }
     return style;
   };
   return (
-    <TouchableOpacity style={getStyles()}>
+    <TouchableOpacity style={getStyles()} onPress={() => onPress(date)}>
       <Text style={getTextStyles()}>{date.date()}</Text>
     </TouchableOpacity>
   );
 };
 
-export default Index;
+export default Day;

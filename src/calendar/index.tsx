@@ -1,65 +1,102 @@
-import React, {useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {Text, View} from 'react-native';
-import styles from './styles';
 
 import Header from './header';
 import Day from './day';
-import {getMonthGrid, isToday, formatMonth} from '../dateUtils';
-import {Date} from '../types';
+import styles from './styles';
 
-const dayNames = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+import {formatMonth, getMonth, getYear, isSameDay, isToday} from '../dateUtils';
+import {DateType, Months, Navigation} from '../types';
+import {dayNames} from './constants';
+import {calendarGridBuilder} from './calendarBuilder';
 
-const Calendar: React.FC = () => {
-  const [currentMonth] = useState(4); // TODO enum
-  const [currentYear] = useState(2022);
+interface CalendarProps {
+  initialDate: string;
+  onDatePress?: (date: DateType) => void;
+}
 
-  const renderDayNames = () => {
+const Calendar: React.FC<CalendarProps> = ({initialDate, onDatePress}) => {
+  const [current, updateCurrent] = useState({
+    month: getMonth(initialDate),
+    year: getYear(initialDate),
+  });
+
+  const [selectedDate, updateSelectedDate] = useState<DateType>(null);
+
+  const navigate = useCallback((navigation: Navigation) => {
+    updateCurrent(({month, year}) => {
+      if (navigation === Navigation.next) {
+        if (month === Months.December) {
+          return {month: Months.January, year: year + 1};
+        }
+        return {month: month + 1, year};
+      }
+      if (navigation === Navigation.prev) {
+        if (month === Months.January) {
+          return {month: Months.December, year: year - 1};
+        }
+        return {month: month - 1, year};
+      }
+      return {month, year};
+    });
+  }, []);
+
+  useEffect(() => {
+    updateCurrent(() => ({
+      month: getMonth(initialDate),
+      year: getYear(initialDate),
+    }));
+  }, [initialDate]);
+
+  useEffect(() => {
+    onDatePress?.(selectedDate);
+  }, [selectedDate]);
+
+  const renderDay = (id: string, date: DateType) => {
+    if (!date) return <View key={id} style={styles.emptyDay} />;
+
     return (
-      <View style={styles.week}>
-        {dayNames.map(name => (
-          <Text key={name}>{name}</Text>
-        ))}
-      </View>
-    );
-  };
-  const renderDay = (date: Date, id: string) => {
-    if (!date) return <View style={styles.emptyDay} key={id} />;
-
-    return (
-      <View style={styles.day} key={id}>
+      <View key={id} style={styles.day}>
         <Day
           date={date}
-          isSelected={false}
+          isSelected={isSameDay(date, selectedDate)}
           isToday={isToday(date)}
-          onPress={() => {}}
+          onPress={updateSelectedDate}
         />
       </View>
     );
   };
 
-  const renderWeek = (days: Date[], id: string) => {
+  const renderWeek = (days: DateType[], id: string) => {
     return (
       <View style={styles.week} key={id}>
         {days.map((day, index) =>
-          renderDay(day, day ? day.toISOString() : `emptyDayId${index}`),
+          renderDay(day ? day.toISOString() : `emptyDayId${index}`, day),
         )}
       </View>
     );
   };
 
   const renderMonth = () => {
-    const weeksGrid = getMonthGrid(currentMonth, currentYear);
+    const weeksGrid = calendarGridBuilder(current.month, current.year);
 
     return (
       <View style={styles.month}>
-        {weeksGrid.map((week, index) => renderWeek(week, 'uniqWeekId' + index))}
+        {weeksGrid.map((week, index) => renderWeek(week, `uniqWeekId${index}`))}
       </View>
     );
   };
   return (
     <View>
-      <Header formattedMonth={formatMonth(currentMonth, currentYear)} />
-      {renderDayNames()}
+      <Header
+        formattedMonth={formatMonth(current.month, current.year)}
+        onPress={navigate}
+      />
+      <View style={styles.week}>
+        {dayNames.map(name => (
+          <Text key={name}>{name}</Text>
+        ))}
+      </View>
       {renderMonth()}
     </View>
   );
