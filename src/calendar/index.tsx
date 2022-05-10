@@ -14,30 +14,41 @@ interface CalendarProps {
   initialDate: string;
   onDatePress?: (date: DateType) => void;
 }
+interface CurrentProps {
+  month: number;
+  year: number;
+}
 
 const Calendar: React.FC<CalendarProps> = ({initialDate, onDatePress}) => {
-  const [current, updateCurrent] = useState({
+  const [current, updateCurrent] = useState<CurrentProps>({
     month: getMonth(initialDate),
     year: getYear(initialDate),
   });
 
   const [selectedDate, updateSelectedDate] = useState<DateType>(null);
 
+  const addMonth = ({month, year}: CurrentProps) => {
+    if (month === Months.December) {
+      return {month: Months.January, year: year + 1};
+    }
+    return {month: month + 1, year};
+  };
+
+  const subtractMonth = ({month, year}: CurrentProps) => {
+    if (month === Months.January) {
+      return {month: Months.December, year: year - 1};
+    }
+    return {month: month - 1, year};
+  };
+
   const navigate = useCallback((navigation: Navigation) => {
-    updateCurrent(({month, year}) => {
-      if (navigation === Navigation.next) {
-        if (month === Months.December) {
-          return {month: Months.January, year: year + 1};
-        }
-        return {month: month + 1, year};
+    updateCurrent(current => {
+      switch (navigation) {
+        case Navigation.next:
+          return addMonth(current);
+        case Navigation.prev:
+          return subtractMonth(current);
       }
-      if (navigation === Navigation.prev) {
-        if (month === Months.January) {
-          return {month: Months.December, year: year - 1};
-        }
-        return {month: month - 1, year};
-      }
-      return {month, year};
     });
   }, []);
 
